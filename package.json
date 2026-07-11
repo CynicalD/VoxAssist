@@ -6,6 +6,7 @@
     "dev": "next dev",
     "ingest": "tsx scripts/ingest.ts",
     "doctor": "tsx scripts/doctor.ts",
+    "atlas:setup": "tsx scripts/atlas-setup.ts",
     "build": "next build",
     "start": "next start"
   },

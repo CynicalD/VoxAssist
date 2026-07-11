@@ -81,7 +81,7 @@ and your AI agents already write). After a (fake) sign-in, a user can:
 | # | Milestone | Owner | Tier | Status | Done when… |
 |---|-----------|-------|------|--------|------------|
 | M0 | **Project setup** — Next.js + TS app scaffold, deps, `.env`, Atlas cluster + keys | both | ⭐ | ☑ | app runs locally; env loads; connects to Atlas |
-| M1 | **Atlas setup** — collection with `owner` + metadata; **vector index** + **search index** | you | ⭐ | ☐ | `$vectorSearch` + `$rankFusion` pipeline returns results |
+| M1 | **Atlas setup** — collection with `owner` + metadata; **vector index** + **search index** | you | ⭐ | ◐ | `$vectorSearch` + `$rankFusion` pipeline returns results |
 | M2 | **Core RAG lib** — parse frontmatter + heading-aware chunk | friend | ⭐ | ☐ | given files, produces chunks with metadata |
 | M3 | **Embed + upsert** — Voyage (batched) → Atlas, tagged by `owner` | you | ⭐ | ☐ | chunks stored with vectors + owner |
 | M4 | **Seed script** — 2–3 fabricated users → ingest → Atlas | friend | ⭐ | ☐ | one command loads all dummy users |
@@ -136,6 +136,18 @@ Voice (M11) is the only skippable item.
   reports **MongoDB ping: connected**, typecheck clean. Only `VOYAGE_API_KEY` still to add (needed at
   M3 embeddings, not before). Next up: **M1 — Atlas collection (`owner` + metadata) + vector & search
   indexes.**
+- **2026-07-11 — M1 indexes created (◐):** added idempotent `scripts/atlas-setup.ts`
+  (`npm run atlas:setup`). Created `voxassist.chunks` collection + two indexes: **`chunks_vector`**
+  (vectorSearch on `embedding`, 1024-d cosine, filters `owner`/`shared`) and **`chunks_text`**
+  (Atlas Search on `content` + `owner`/`shared`/`tags`) for the lexical arm of `$rankFusion`. Indexes
+  build async (PENDING→READY) — **both now READY**. **Remaining for M1 done:** verify a real
+  retrieval query returns results — needs data, so true verification lands after M3/M4 ingest.
+- **2026-07-11 — ⚠️ `$rankFusion` unavailable (retrieval plan change):** cluster is **MongoDB 8.0.27**;
+  `$rankFusion` needs **8.1+**. **Decision needed at M5** — recommend **app-side Reciprocal Rank
+  Fusion**: run `$vectorSearch` (via `chunks_vector`) and `$search` (via `chunks_text`) separately,
+  each scoped by `owner` (+ `shared` in friend mode), then fuse by RRF in TS. Keeps the hybrid story
+  with no server-version dependency. Simpler fallback if time is tight: **vector-only** (`$vectorSearch`
+  alone) — `chunks_text` then just sits ready for later. Both indexes already support either path.
 
 ---
 
