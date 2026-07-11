@@ -10,7 +10,7 @@ tags:
 
 Notes on active builds.
 
-## RAGnarok
+## VoxAssist
 
 Personal knowledge-base RAG for the hackathon.
 
