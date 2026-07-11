@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { AudioLines, ArrowRight, ShieldCheck } from "lucide-react"
+import { AudioLines, ArrowRight, ShieldCheck, Sparkles, Quote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,32 +32,45 @@ export function LoginShell({ onSubmit, children, loading = false, error }: Login
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-2">
-      {/* Brand panel */}
       <aside className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-primary-foreground lg:flex">
         <div className="flex items-center gap-2.5">
           <AudioLines className="size-6" aria-hidden="true" />
           <span className="text-lg font-semibold tracking-tight">VoxAssist</span>
         </div>
 
-        <div className="max-w-md space-y-4">
-          <h1 className="text-pretty text-3xl font-semibold leading-tight">
-            Ask your knowledge base out loud. Get grounded, cited answers back.
+        <div className="max-w-md space-y-5">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-2.5 py-1 text-xs font-medium text-primary-foreground/90">
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Personal-KB RAG · ask + plan
+          </p>
+          <h1 className="text-pretty text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+            Ask your knowledge base. Get grounded, cited answers back.
           </h1>
           <p className="text-pretty text-sm leading-relaxed text-primary-foreground/80">
-            A voice-first RAG assistant over your notes. Every claim is traced back to the source
-            note, and you can scope queries to your own vault or a teammate&apos;s shared one.
+            Retrieval-augmented answers and project briefs over your Obsidian-style notes.
+            Scope queries to your vault or a teammate&apos;s shared notes — every claim cites its source.
           </p>
+          <ul className="space-y-2 text-sm text-primary-foreground/85">
+            <li className="flex items-start gap-2">
+              <Quote className="mt-0.5 size-4 shrink-0 opacity-80" aria-hidden="true" />
+              Streamed answers with live citation cards
+            </li>
+            <li className="flex items-start gap-2">
+              <ShieldCheck className="mt-0.5 size-4 shrink-0 opacity-80" aria-hidden="true" />
+              Friend scope only ever surfaces shared notes
+            </li>
+          </ul>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-primary-foreground/80">
           <ShieldCheck className="size-4" aria-hidden="true" />
-          <span>Cross-user queries only ever surface shared notes.</span>
+          <span>Privacy-first cross-user lookup — never a bypass.</span>
         </div>
 
-        {/* Decorative concentric rings, purely aesthetic */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border border-primary-foreground/15"
+          className="pointer-events-none absolute -right-24 -top-24 size-72 animate-pulse rounded-full border border-primary-foreground/15"
+          style={{ animationDuration: "6s" }}
         />
         <div
           aria-hidden="true"
@@ -65,7 +78,6 @@ export function LoginShell({ onSubmit, children, loading = false, error }: Login
         />
       </aside>
 
-      {/* Form panel */}
       <main className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
@@ -75,7 +87,9 @@ export function LoginShell({ onSubmit, children, loading = false, error }: Login
 
           <div className="mb-8 space-y-1.5">
             <h2 className="text-2xl font-semibold tracking-tight">Welcome back</h2>
-            <p className="text-sm text-muted-foreground">Sign in to query your knowledge base.</p>
+            <p className="text-sm text-muted-foreground">
+              Sign in to query your knowledge base and draft grounded plans.
+            </p>
           </div>
 
           {children ?? (

@@ -39,17 +39,22 @@ export function PlanPanel({ plan, loading = false, title }: PlanPanelProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-border bg-card p-8 text-center">
+      <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-border bg-card p-6 text-center sm:min-h-64 sm:p-8">
         <Loader2 className="mb-3 size-6 animate-spin text-primary" aria-hidden="true" />
         <p className="text-sm font-medium">Drafting your plan…</p>
         <p className="mt-1 text-sm text-muted-foreground">Grounding each section in your notes.</p>
+        <div className="mt-6 w-full max-w-sm space-y-2" aria-hidden="true">
+          <div className="h-3 w-full animate-pulse rounded bg-muted" />
+          <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-4/6 animate-pulse rounded bg-muted" />
+        </div>
       </div>
     )
   }
 
   if (!plan) {
     return (
-      <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+      <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 p-6 text-center sm:min-h-64 sm:p-8">
         <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
           <ClipboardList className="size-5" aria-hidden="true" />
         </div>

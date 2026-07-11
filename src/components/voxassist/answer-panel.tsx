@@ -1,7 +1,17 @@
 "use client"
 
-import { MessageSquareText, Quote, Sparkles, Copy, Check } from "lucide-react"
-import { useState } from "react"
+import {
+  MessageSquareText,
+  Quote,
+  Sparkles,
+  Copy,
+  Check,
+  Volume2,
+  VolumeX,
+  WandSparkles,
+  Loader2,
+} from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import type { Citation } from "@/lib/contract"
 import { Button } from "@/components/ui/button"
 import { CitationCard } from "./citation-card"
@@ -17,14 +27,53 @@ export interface AnswerPanelProps {
   streaming?: boolean
   /** True before any request has been made. */
   idle?: boolean
+  /** Scope owner label for the retrieval reveal (e.g. "momen" or "rayan"). */
+  searchingOwner?: string
+  /** Friend-scope → show shared badges on citations. */
+  friendScope?: boolean
+  /** Seed Plan mode from this answer. */
+  onDraftPlan?: () => void
 }
 
 /**
- * Renders a streamed answer with a live cursor plus the source citation cards.
- * Feed `answer` incrementally (append deltas) and toggle `streaming`.
+ * Renders a streamed answer with retrieval reveal, citation stagger,
+ * copy, draft-plan bridge, and browser SpeechSynthesis read-aloud.
+ *
+ * ElevenLabs TTS is deferred (needs a server route + API key).
  */
-export function AnswerPanel({ question, answer, citations, streaming = false, idle = false }: AnswerPanelProps) {
+export function AnswerPanel({
+  question,
+  answer,
+  citations,
+  streaming = false,
+  idle = false,
+  searchingOwner,
+  friendScope = false,
+  onDraftPlan,
+}: AnswerPanelProps) {
   const [copied, setCopied] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
+  const speechSupported =
+    typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined"
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  const searching = streaming && !answer && citations.length === 0
+  const ownerLabel = searchingOwner?.trim() || "your"
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (streaming && speaking) {
+      window.speechSynthesis?.cancel()
+      setSpeaking(false)
+    }
+  }, [streaming, speaking])
 
   async function copyAnswer() {
     if (!answer) return
@@ -35,6 +84,22 @@ export function AnswerPanel({ question, answer, citations, streaming = false, id
     } catch {
       /* ignore */
     }
+  }
+
+  function toggleSpeak() {
+    if (!speechSupported) return
+    if (speaking) {
+      window.speechSynthesis.cancel()
+      setSpeaking(false)
+      return
+    }
+    if (!answer.trim()) return
+    const utter = new SpeechSynthesisUtterance(answer)
+    utter.onend = () => setSpeaking(false)
+    utter.onerror = () => setSpeaking(false)
+    utteranceRef.current = utter
+    setSpeaking(true)
+    window.speechSynthesis.speak(utter)
   }
 
   if (idle && !answer) {
@@ -53,31 +118,86 @@ export function AnswerPanel({ question, answer, citations, streaming = false, id
 
   return (
     <div className="rounded-xl border border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border px-3 py-3 sm:px-4">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-3 sm:px-4">
         <Sparkles className="size-4 text-primary" aria-hidden="true" />
         <h2 className="text-sm font-semibold">Answer</h2>
         {streaming && (
-          <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="size-1.5 animate-pulse rounded-full bg-primary" aria-hidden="true" />
-            Streaming
+            {searching ? "Searching" : "Streaming"}
           </span>
         )}
-        {!streaming && answer && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="ml-auto"
-            onClick={copyAnswer}
-            aria-label="Copy answer"
-          >
-            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            {copied ? "Copied" : "Copy"}
-          </Button>
-        )}
+        <div className="ml-auto flex flex-wrap items-center gap-1">
+          {!streaming && answer && onDraftPlan && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onDraftPlan}
+              aria-label="Draft plan from this answer"
+            >
+              <WandSparkles className="size-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Draft plan</span>
+            </Button>
+          )}
+          {!streaming && answer && speechSupported && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={toggleSpeak}
+              aria-label={speaking ? "Stop reading aloud" : "Read answer aloud"}
+            >
+              {speaking ? (
+                <VolumeX className="size-4" aria-hidden="true" />
+              ) : (
+                <Volume2 className="size-4" aria-hidden="true" />
+              )}
+              <span className="hidden sm:inline">{speaking ? "Stop" : "Read"}</span>
+            </Button>
+          )}
+          {!streaming && answer && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={copyAnswer}
+              aria-label="Copy answer"
+            >
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="p-3 sm:p-4">
+        {searching && (
+          <div
+            className="mb-4 flex items-center gap-3 rounded-lg border border-dashed border-primary/30 bg-primary/5 px-3 py-3"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-medium">
+                Searching {ownerLabel === "your" ? "your vault" : `${ownerLabel}'s vault`}…
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Retrieving grounded notes before generating an answer.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {streaming && !searching && !answer && (
+          <div className="space-y-2" aria-hidden="true">
+            <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-full animate-pulse rounded bg-muted" />
+            <div className="h-3 w-4/6 animate-pulse rounded bg-muted" />
+          </div>
+        )}
+
         {question && (
           <p className="mb-3 text-sm font-medium text-muted-foreground">
             <span className="text-foreground">Q:</span> {question}
@@ -86,15 +206,17 @@ export function AnswerPanel({ question, answer, citations, streaming = false, id
 
         <div className="text-pretty">
           {streaming ? (
-            <p className="text-[0.95rem] leading-relaxed text-foreground whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-foreground">
               {answer}
-              <span
-                className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-primary align-middle"
-                aria-hidden="true"
-              />
+              {answer && (
+                <span
+                  className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-primary align-middle"
+                  aria-hidden="true"
+                />
+              )}
             </p>
           ) : (
-            <SimpleMarkdown source={answer} />
+            answer && <SimpleMarkdown source={answer} />
           )}
         </div>
 
@@ -106,7 +228,13 @@ export function AnswerPanel({ question, answer, citations, streaming = false, id
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {citations.map((citation, i) => (
-                <CitationCard key={`${citation.documentPath}-${i}`} citation={citation} index={i + 1} />
+                <CitationCard
+                  key={`${citation.documentPath}-${i}`}
+                  citation={citation}
+                  index={i + 1}
+                  sharedBadge={friendScope}
+                  revealDelayMs={i * 80}
+                />
               ))}
             </div>
           </section>

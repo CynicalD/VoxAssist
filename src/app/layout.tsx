@@ -14,7 +14,21 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "VoxAssist — Knowledge Assistant",
   description:
-    "RAG knowledge assistant. Ask your vault, cite every claim, draft grounded plans.",
+    "Ask your vault, cite every claim, draft grounded plans. Personal-KB RAG with friend-scope sharing.",
+  applicationName: "VoxAssist",
+  openGraph: {
+    title: "VoxAssist — Knowledge Assistant",
+    description:
+      "Retrieval-augmented ask + plan over your notes. Grounded answers with citations; friend scope respects shared-only notes.",
+    type: "website",
+    siteName: "VoxAssist",
+  },
+  twitter: {
+    card: "summary",
+    title: "VoxAssist — Knowledge Assistant",
+    description:
+      "Ask your vault, cite every claim, draft grounded plans.",
+  },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
   },
