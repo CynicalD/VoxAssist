@@ -91,7 +91,7 @@ and your AI agents already write). After a (fake) sign-in, a user can:
 | M8 | **Web app** — sign-in + ask/plan UI + API (built on `lane/app`) | Claude | ⭐ | ☑ | sign in → ask → plan all work in the browser |
 | M9 | **Ask-a-friend** — username box → existence check → scoped query | Claude + you | ⭐ | ☑ | valid username → only their data; invalid → "not found" |
 | M9b | **Upload notes** — .md/.txt → chunk → embed → Atlas, share flag | Claude | ⭐ | ☑ | upload → self-ask hits it; friends see only shared |
-| M10 | **Deploy** — DigitalOcean App Platform | both | ⭐ | ◐ | app reachable at a public URL |
+| M10 | **Deploy** — DigitalOcean App Platform | both | ⭐ | ☑ | app reachable at a public URL |
 | M11 | **Voice** *(stretch)* — TTS read-aloud of the answer | — | ✧ | ☐ | answer plays as audio |
 | M12 | **Demo prep** — script + rehearsal | both | ⭐ | ☐ | rehearsed happy-path demo |
 
@@ -200,10 +200,15 @@ Voice (M11) is the only skippable item.
   needed), fake-auth build, secrets injected via API. Build gotcha fixed: `NODE_ENV=production`
   at BUILD scope makes DO skip devDependencies (Next needs `@tailwindcss/postcss`) — now RUN_TIME
   only (also fixed in `deploy/app.yaml`). Prod smoke test: page 200, signed-out 401, friend-plan
-  403 all pass. **⚠️ BLOCKED on Atlas Network Access:** Atlas rejects DO's IPs (TLS alert 80) —
-  Rayan must add `0.0.0.0/0` in Atlas → Network Access → Add IP Address, then ask/upload go live
-  (code is identical to the locally-verified build). Redeploys: push to `DevBranch` does NOT
-  auto-deploy (git-source); trigger via DO dashboard → Deploy, or the API.
+  403 all pass. Redeploys: push to `DevBranch` does NOT auto-deploy (git-source); trigger via DO
+  dashboard → Deploy, or `POST /v2/apps/<id>/deployments {"force_build":true}`.
+- **2026-07-11 — M10 FULLY LIVE ☑ (Atlas TLS-80 fixed):** two causes: (1) Rayan added `0.0.0.0/0`
+  to Atlas Network Access (DO egress IPs were blocked → Atlas presents TLS alert 80, not a clean
+  refusal); (2) **bug**: `getClient()` cached the *rejected* `connect()` promise in the global, so
+  once the first prod connection failed the container stayed poisoned until restart. Fixed
+  `src/lib/db.ts` to clear the global on failure (next request retries) + 10 s serverSelectionTimeout,
+  then forced a fresh deploy. **Full prod smoke green:** self ask, friend ask, unknown-user 404,
+  upload→embed to Atlas, self plan — all pass at https://voxassist-8oef4.ondigitalocean.app.
 
 ---
 
