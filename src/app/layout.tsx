@@ -1,15 +1,31 @@
-import {
-  ClerkProvider,
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
-import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
-  title: "VoxAssist",
-  description: "Personal-KB RAG",
+  title: "VoxAssist — Knowledge Assistant",
+  description:
+    "RAG knowledge assistant. Ask your vault, cite every claim, draft grounded plans.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 };
 
 export default function RootLayout({
@@ -19,26 +35,16 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body>
-          <header
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "0.75rem 1.25rem",
-              borderBottom: "1px solid #ddd",
-            }}
-          >
-            <strong>VoxAssist</strong>
-            <SignedOut>
-              <SignInButton mode="modal" />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
-          {children}
+      <html
+        lang="en"
+        className={`dark ${inter.variable} ${jetbrainsMono.variable}`}
+        suppressHydrationWarning
+      >
+        <body className="bg-background font-sans antialiased">
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            {children}
+            <Toaster />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

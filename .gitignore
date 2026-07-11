@@ -60,3 +60,6 @@ message.txt
 
 # OS
 Desktop.ini
+
+# clerk configuration (can include secrets)
+/.clerk/
