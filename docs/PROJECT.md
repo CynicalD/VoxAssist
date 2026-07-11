@@ -82,14 +82,14 @@ and your AI agents already write). After a (fake) sign-in, a user can:
 |---|-----------|-------|------|--------|------------|
 | M0 | **Project setup** — Next.js + TS app scaffold, deps, `.env`, Atlas cluster + keys | both | ⭐ | ☑ | app runs locally; env loads; connects to Atlas |
 | M1 | **Atlas setup** — collection with `owner` + metadata; **vector index** + **search index** | you | ⭐ | ◐ | `$vectorSearch` + `$rankFusion` pipeline returns results |
-| M2 | **Core RAG lib** — parse frontmatter + heading-aware chunk | friend | ⭐ | ☐ | given files, produces chunks with metadata |
-| M3 | **Embed + upsert** — Voyage (batched) → Atlas, tagged by `owner` | you | ⭐ | ☐ | chunks stored with vectors + owner |
-| M4 | **Seed script** — 2–3 fabricated users → ingest → Atlas | friend | ⭐ | ☐ | one command loads all dummy users |
-| M5 | **Hybrid retrieval** — `$vectorSearch` + `$rankFusion`, scoped by `owner` | you | ⭐ | ☐ | a query returns ranked, cited chunks for one owner |
-| M6 | **`ask` (self)** — retrieve → Claude grounded answer + citations (verify via CLI) | you | ⭐ | ☐ | real question answered with sources |
-| M7 | **`plan`** — personalized brief (adaptive thinking) → `.md` (verify via CLI) | you | ⭐ | ☐ | an idea yields a grounded brief |
-| M8 | **Web app** — fake sign-in (enter username) + ask/plan UI + API | Claude | ⭐ | ☐ | sign in → ask → plan all work in the browser |
-| M9 | **Ask-a-friend** — username box → existence check → scoped query | Claude + you | ⭐ | ☐ | valid username → only their data; invalid → "not found" |
+| M2 | **Core RAG lib** — parse frontmatter + heading-aware chunk | friend | ⭐ | ☑ | given files, produces chunks with metadata |
+| M3 | **Embed + upsert** — Voyage (batched) → Atlas, tagged by `owner` | you | ⭐ | ☑ | chunks stored with vectors + owner |
+| M4 | **Seed script** — 2–3 fabricated users → ingest → Atlas | friend | ⭐ | ☑ | one command loads all dummy users |
+| M5 | **Hybrid retrieval** — `$vectorSearch` + app-side RRF, scoped by `owner` | you | ⭐ | ☑ | a query returns ranked, cited chunks for one owner |
+| M6 | **`ask` (self)** — retrieve → Claude grounded answer + citations (verify via CLI) | you | ⭐ | ☑ | real question answered with sources |
+| M7 | **`plan`** — personalized brief → `.md` (verify via CLI) | you | ⭐ | ☑ | an idea yields a grounded brief |
+| M8 | **Web app** — sign-in + ask/plan UI + API (built on `lane/app`) | Claude | ⭐ | ◐ | sign in → ask → plan all work in the browser |
+| M9 | **Ask-a-friend** — username box → existence check → scoped query | Claude + you | ⭐ | ◐ | valid username → only their data; invalid → "not found" |
 | M10 | **Deploy** — DigitalOcean App Platform | both | ⭐ | ☐ | app reachable at a public URL |
 | M11 | **Voice** *(stretch)* — TTS read-aloud of the answer | — | ✧ | ☐ | answer plays as audio |
 | M12 | **Demo prep** — script + rehearsal | both | ⭐ | ☐ | rehearsed happy-path demo |
@@ -148,6 +148,34 @@ Voice (M11) is the only skippable item.
   each scoped by `owner` (+ `shared` in friend mode), then fuse by RRF in TS. Keeps the hybrid story
   with no server-version dependency. Simpler fallback if time is tight: **vector-only** (`$vectorSearch`
   alone) — `chunks_text` then just sits ready for later. Both indexes already support either path.
+- **2026-07-11 — M2–M7 DONE (core RAG verified end-to-end via CLI):**
+  - **Real AI modules** in `src/ai/`: `embeddings.ts` (Voyage REST, batched, dim-checked),
+    `store.ts` (embed + bulk upsert; **Atlas `_id`s are owner-qualified** — chunk ids `path#i` collide
+    across owners otherwise), `retrieval.ts` (hybrid: `$vectorSearch` + `$search` fused by **app-side
+    RRF**, both arms verified live; friend ⇒ `shared===true` enforced twice), `generation.ts`
+    (all-Claude: `ask`→Haiku, `plan`→Opus). Factory `src/ai/index.ts` returns real impls when
+    `USE_MOCK_AI=false`; also exports `create*` matching `lane/app`'s dynamic factory.
+  - **Seeded Atlas** (`npm run seed`): alex/marcus/priya, 9 docs → **31 chunks, 31 embedded**, all
+    `shared: true` (demo decision). Verify CLI: `npm run query -- ask|plan|retrieve "…" --owner X
+    [--friend]`. Owner isolation confirmed (marcus scope never returns alex data); friend scope works;
+    `plan` produced a genuinely personalized Opus brief (cited Marcus's PulseNode/FerroDrive, kept him
+    off web frontend). Sample brief in `output/` (gitignored).
+- **2026-07-11 — `lane/app` frontend verified locally (M8/M9 ◐, NOT merged):** ran `origin/lane/app`
+  in a throwaway worktree with my real AI modules dropped in — **full stack works**: UI renders, SSE
+  `ask` streams grounded cited answers (self + friend), unknown username → 404, `/api/plan` returns a
+  real Opus brief. Findings for the merge (owner: Claude, when Rayan says go):
+  1. `lane/app` uses **Clerk** — diverges from the locked **fake auth** decision; no Clerk keys in our
+     env. Local test used a fake-auth stub aliased over `@clerk/nextjs`. Decide: get Clerk keys from
+     the frontend teammate, or swap to fake auth at merge.
+  2. `lane/app` `package.json` lacks **`@anthropic-ai/sdk`** (add on merge).
+  3. `src/lib/users.ts` username map lacks the seed users — add `alex`/`priya`/`marcus`.
+  4. `src/lib/config.ts` needs the two configs merged (UI fields + retrieval fields) — merged version
+     drafted during the worktree test.
+  5. Its AI factory dynamically imports `./store`/`./retrieval`/`./generation` — my modules' `create*`
+     exports match it exactly; drop-in.
+- **2026-07-11 — hosting Q&A:** Atlas **cannot host the app** — it's the DB only. The Next.js app
+  deploys to **DigitalOcean App Platform** at M10 (`deploy/` spec exists on `lane/app`); DO API key
+  is in local `.env` (not read by app code).
 
 ---
 

@@ -26,6 +26,7 @@ export const config = {
   planModel: process.env.CLAUDE_PLAN_MODEL || "claude-opus-4-8",
   collections: {
     chunks: "chunks",
+    documents: "documents",
     users: "users",
   },
 } as const;

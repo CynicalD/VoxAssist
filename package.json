@@ -7,10 +7,13 @@
     "ingest": "tsx scripts/ingest.ts",
     "doctor": "tsx scripts/doctor.ts",
     "atlas:setup": "tsx scripts/atlas-setup.ts",
+    "seed": "tsx scripts/seed.ts",
+    "query": "tsx scripts/query.ts",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@clerk/nextjs": "^6.22.0",
     "dotenv": "^16.5.0",
     "fast-glob": "^3.3.3",

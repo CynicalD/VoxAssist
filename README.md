@@ -15,7 +15,17 @@ Planning docs live in [`docs/`](./docs); demo seed users in [`seed/`](./seed).
 npm install
 cp .env.example .env   # then fill in the values
 npm run doctor         # checks env + MongoDB connectivity
+npm run atlas:setup    # creates the chunks collection + vector/search indexes
+npm run seed           # embeds + upserts the demo users in seed/ into Atlas
 npm run dev            # http://localhost:3000
+```
+
+Query the RAG pipeline directly from the CLI (real retrieval + Claude):
+
+```bash
+npm run query -- ask  "What is Alex's stack?" --owner alex
+npm run query -- ask  "How does she work?"    --owner priya --friend
+npm run query -- plan "A notes-to-website CLI" --owner alex --out brief.md
 ```
 
 The app runs on mock AI by default (`USE_MOCK_AI=true`), so it boots without real
