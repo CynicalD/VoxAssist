@@ -4,25 +4,27 @@
 
 | Step | Tool |
 | --- | --- |
-| Capture | [OBS Studio](https://obsproject.com/) (free) or [Loom](https://www.loom.com/) |
+| Capture | [OBS Studio](https://obsproject.com/) or [Loom](https://www.loom.com/) |
 | Edit / captions | [Descript](https://www.descript.com/) or CapCut |
-| Optional deterministic UI take | Playwright script below |
+| Optional deterministic UI take | Playwright stub in [`demo.spec.ts`](./demo.spec.ts) |
 
 ## Happy-path narration
 
-1. **Open the deployed URL** — dark UI, VoxAssist branding. “This is our personal-KB RAG over Obsidian-style notes.”
-2. **Sign in as momen** (Clerk). Show the header `@momen`.
-3. **Self ask** — click chip “What is my stack?” → Ask. Show streaming tokens + citation cards (ragnarok / Stack).
-4. **Friend ask** — toggle “Another user”, type `rayan`, ask “What stack does Rayan prefer?” Show only **shared** notes (Python/Atlas) — mention private notes stay private.
-5. **Plan** — switch to Plan, chip “Ship a RAG demo this weekend” → Draft plan. Show markdown brief + **Download .md**.
-6. **Close** — “Ask and plan, grounded in real notes, deployable on DigitalOcean with Atlas + Voyage.”
+1. **Open the app** — VoxAssist branding. “Personal-KB RAG over markdown notes.”
+2. **Sign in** — type a username (fake auth) or Clerk persona. Show the signed-in owner in the header.
+3. **Self ask** — e.g. “What is my stack?” → Ask. Show streaming tokens + citation cards.
+4. **Friend ask** — target another user (seeded: `alex` / `priya` / `marcus`, or a teammate). Ask “What’s their stack?” Note only **shared** notes are searchable.
+5. **Plan** — switch to Plan, e.g. “Ship a RAG demo this weekend” → Draft plan. Show markdown brief + download.
+6. **Optional** — upload a short `.md`, or play TTS read-aloud if ElevenLabs is configured.
+7. **Close** — “Ask and plan, grounded in real notes — Atlas + Voyage + Claude on DigitalOcean.”
 
 ## Checklist before recording
 
-- [ ] DO app healthy; Clerk origins include the DO URL
-- [ ] `CLERK_OWNER_MAP` set; both personas can sign in
-- [ ] Atlas seeded (`sample-vault` + `sample-vault-rayan`)
-- [ ] Hybrid: real retrieval if modules present, else mock fallback still demoable
+- [ ] DO app healthy (or local `npm run dev` with real keys)
+- [ ] Atlas seeded (`npm run seed` → [`seed/`](../seed))
+- [ ] `USE_MOCK_AI=false` for the live demo (mocks only if you must)
+- [ ] Friend targets have `shared: true` notes
+- [ ] If using Clerk: origins include the deploy URL; `CLERK_OWNER_MAP` set
 - [ ] Browser zoom 110–125%; hide bookmarks bar
 
 ## Optional Playwright walkthrough
@@ -32,4 +34,4 @@ npx playwright install chromium
 npx playwright test docs/demo.spec.ts --headed
 ```
 
-Requires `DEMO_BASE_URL` and a storage state or test credentials if you extend the stub.
+Requires `DEMO_BASE_URL` and credentials/storage state if you extend the stub.

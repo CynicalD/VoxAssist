@@ -17,7 +17,7 @@ Implement and commit:
 | --- | --- | --- |
 | `src/ai/store.ts` | `createStore(): IVectorStore` | Voyage embed + Atlas upsert |
 | `src/ai/retrieval.ts` | `createRetriever(): IRetriever` | `$vectorSearch` + `$rankFusion`, enforce friend ⇒ `shared === true` |
-| `src/ai/generation.ts` | `createGenerator(): IGenerator` | Gemini `ask`, Opus/Gradient `plan` |
+| `src/ai/generation.ts` | `createGenerator(): IGenerator` | Gemini `ask`, Claude Opus `plan` |
 
 Suggested collections (align with contract):
 

@@ -99,7 +99,7 @@ export class MockGenerator implements IGenerator {
         `## Proposed approach\n` +
         `1. Ingest vault notes into chunked DocumentMeta/Chunk records.\n` +
         `2. Embed + upsert via Voyage + MongoDB Atlas Vector Search.\n` +
-        `3. Expose /api/ask (Gemini) and /api/plan (Opus via Gradient) with citations.\n` +
+        `3. Expose /api/ask (Gemini) and /api/plan (Claude Opus) with citations.\n` +
         `4. Protect routes with Clerk; friend scope only returns shared notes.\n\n` +
         `## Sources\n${sources || "- (none)"}\n`,
       citations: context.citations,

@@ -1,9 +1,8 @@
 # VoxAssist
 
-<<<<<<< HEAD
 **Personal knowledge-base RAG for ask + plan — with optional voice.**
 
-VoxAssist turns an Obsidian-style markdown vault (notes you and your agents already write) into a grounded assistant. Ask questions about your work and preferences, or describe an idea and get a personalized project brief — both cited from real notes. A lightweight **ask-a-friend** scope lets teammates query each other’s **shared** notes before a remote collab.
+VoxAssist turns markdown/txt notes (the kind you and your agents already write) into a grounded assistant. Ask questions about your work and preferences, or describe an idea and get a personalized project brief — both cited from real notes. A lightweight **ask-a-friend** scope lets teammates query each other’s **shared** notes.
 
 **What it is not:** an agent that builds projects end-to-end. It **answers** and **plans**, then stops.
 
@@ -11,48 +10,17 @@ VoxAssist turns an Obsidian-style markdown vault (notes you and your agents alre
 
 ---
 
-## Overview
+## What you can do
 
 | Mode | What you get |
 | --- | --- |
-| **`ask`** | Grounded answer from your vault, with file + heading citations |
-| **`plan`** | Personalized project brief (stack, prefs, past work) written to a downloadable `.md` |
-| **Friend scope** | Query another user’s notes limited to `shared === true` (lookup, never a bypass) |
-| **Voice** *(optional)* | STT in / TTS out for a push-to-talk loop |
+| **Ask (self)** | Grounded answer from your vault, with file + heading citations |
+| **Plan** | Personalized project brief (stack, prefs, past work) as downloadable `.md` |
+| **Ask a friend** | Query another user’s notes limited to `shared === true` (lookup, never a bypass) |
+| **Upload** | Add a markdown/txt file; chunked, embedded, and stored under your owner |
+| **Voice** *(optional)* | Server TTS via ElevenLabs (`/api/tts`); browser SpeechSynthesis as fallback. STT is still stretch. |
 
 Corpus = personal markdown with YAML frontmatter (`owner`, `shared`, tags) plus heading-aware chunks, `#tags`, and `[[wikilinks]]`.
-
----
-
-## Proposed architecture
-
-```
-  Markdown vault (.md)
-        │  walk → frontmatter → heading chunk → hash
-        ▼
-  Ingestion (CLI / optional API)  ──▶  Chunk[] + DocumentMeta
-        │                                    │
-        │                         Voyage embed + Atlas upsert
-        ▼                                    ▼
-  Next.js API                         MongoDB Atlas
-  /api/ask  /api/plan                 Vector Search + lexical
-        │                                    │
-        │◄──── retrieve (hybrid / RRF) ──────┘
-        ▼
-  Generator:  ask → Gemini (stream + cite)
-              plan → Opus 4.8 via DO Gradient → .md
-        │
-        ▼
-  Web UI (v0) + Clerk auth   →   DigitalOcean App Platform
-```
-
-**Coupling points (lock early, build in parallel):**
-
-1. **Chunk / document schema** — ingestion produces it; embed/store/retrieve consume it (`src/contract/types.ts`).
-2. **AI module interfaces** — `IVectorStore`, `IRetriever`, `IGenerator`; API calls these only.
-3. **Demo script** — shared happy path.
-
-Until real AI modules land, `USE_MOCK_AI=true` keeps the app shell and ingestion unblocked.
 
 ---
 
@@ -61,103 +29,48 @@ Until real AI modules land, `USE_MOCK_AI=true` keeps the app shell and ingestion
 | Layer | Choice |
 | --- | --- |
 | App + API | **Next.js 15** (App Router) + **TypeScript** |
-| Ingestion | **tsx** CLI (`npm run ingest`) — `fast-glob`, `gray-matter`, sha256 hashes |
-| Auth | **Clerk** (`owner` ← `userId`) |
-| Vector DB | **MongoDB Atlas Vector Search** (`$vectorSearch` + `$rankFusion`) |
-| Embeddings | **Voyage** (`voyage-3` / `3.5`, dim locked before schema) |
-| `ask` LLM | **Gemini** (2.5 Flash or newer) |
-| `plan` LLM | **Claude Opus 4.8** via **DigitalOcean Gradient** |
-| UI | **v0**-generated, wired to `/api/ask` and `/api/plan` |
+| Auth | **Fake auth** (type a username) or **Clerk** when keys are set |
+| Vector DB | **MongoDB Atlas** (`$vectorSearch` + `$rankFusion`) |
+| Embeddings | **Voyage** (`voyage-3.5`, dim 1024) |
+| `ask` LLM | **Gemini** (`gemini-2.5-flash`) |
+| `plan` LLM | **Claude Opus** |
+| TTS *(optional)* | **ElevenLabs** (`eleven_flash_v2_5`) |
 | Deploy | **DigitalOcean App Platform** |
-| Voice *(stretch)* | **ElevenLabs** STT/TTS |
+
+Privacy guardrail: friend-scope retrieval enforces `shared === true`. Entering a username is a **lookup**, never a permission bypass.
 
 ---
-
-## Responsibilities
-
-| | [omen-mali](https://github.com/omen-mali) (Momen) | [CynicalD](https://github.com/CynicalD) (Rayan) |
-| --- | --- | --- |
-| **Focus** | Systems / integration — get data in, stand the app up, ship it | ML / retrieval / generation — the RAG brain and data model |
-| **Owns** | Vault ingestion (walk, parse, chunk, hash, sync) · Next.js API (`/api/ask`, `/api/plan`, optional `/api/ingest`) · Clerk + friend-scope wiring · v0 UI · DO deploy · optional TTS / QNX voice terminal | Atlas schema + vector/lexical indexes · Voyage embed + upsert · hybrid retrieve + rerank · `ask` (Gemini) + `plan` (Opus/Gradient) · optional STT · retrieval eval set |
-| **Does not own** | Embedding model choice, Atlas index internals, generation prompts | Vault parsing / chunking rules, App Platform app shell, Clerk session plumbing |
-
-**Shared:** contract types + AI interfaces, demo pitch, and integration on Saturday.
-
-Privacy guardrail: friend-scope retrieval must enforce `shared === true`. The API only passes `Scope`; retrieval enforces the flag. Entering a username is a **lookup**, never a permission bypass.
-
----
-
-## Repo layout (app lane)
-
-```
-src/
-  contract/types.ts     # shared schema + IVectorStore / IRetriever / IGenerator
-  ingestion/            # vault → DocumentMeta[] + Chunk[]
-  ai/                   # mocks + factory (real store/retrieval/generation swap in later)
-  app/api/              # ask (SSE) · plan · ingest
-  lib/config.ts
-scripts/ingest.ts
-sample-vault/           # synthetic fixtures for local demos
-deploy/                 # DO App Platform spec (+ optional Dockerfile)
-```
-
----
-=======
-RAG over a personal knowledge base (markdown/txt notes). After sign-in you can:
-
-- **Ask about yourself** — grounded answers from your own notes, with citations.
-- **Plan a project** — a personalized brief built from your stack/style/past work (self-only).
-- **Ask about a friend** — query another user's **shared** notes by username.
-- **Upload notes** — add a markdown/txt file; it's chunked, embedded, and stored in the cloud.
-
-Next.js full-stack (TypeScript) · MongoDB Atlas Vector Search · Voyage embeddings · **all-Claude synthesis** (small model for `ask`, Opus for `plan`).
-Team **Void Stars** · [CynicalD/VoxAssist](https://github.com/CynicalD/VoxAssist) · Planning docs in [`docs/`](./docs) · demo seed users in [`seed/`](./seed).
->>>>>>> DevBranch
 
 ## Quick start
 
+### Mock mode (no API keys)
+
 ```bash
-<<<<<<< HEAD
-cp .env.example .env   # set USE_MOCK_AI=true for local mocks
+cp .env.example .env   # USE_MOCK_AI=true by default
 npm install
 npm run dev            # http://localhost:3000
+```
 
-# Ingest sample notes (prints summary + mock upsert)
+Sign in by typing any username (Clerk keys empty ⇒ fake auth). The username is the vault `owner`.
+
+Optional local ingest of the sample vault (prints a summary; mock upsert when `USE_MOCK_AI=true`):
+
+```bash
 npm run ingest -- --vault ./sample-vault --as momen
 ```
 
-**Ask (SSE)** — prefer a JSON file so shells don’t break on quotes:
-
-```powershell
-# PowerShell (Windows)
-@'
-{"question":"what is my stack?","scope":{"kind":"self","owner":"momen"}}
-'@ | Set-Content .\ask.json -NoNewline -Encoding utf8
-
-curl.exe -sN -X POST http://localhost:3000/api/ask `
-  -H "Content-Type: application/json" `
-  --data-binary "@ask.json"
-```
+### Real mode (Atlas + Voyage + Gemini/Claude)
 
 ```bash
-# bash / WSL
-printf '%s' '{"question":"what is my stack?","scope":{"kind":"self","owner":"momen"}}' > /tmp/ask.json
-curl -sN -X POST http://localhost:3000/api/ask \
-  -H 'Content-Type: application/json' \
-  --data-binary @/tmp/ask.json
-```
-
----
-=======
+cp .env.example .env   # set keys; USE_MOCK_AI=false
 npm install
-cp .env.example .env   # then fill in the values
-npm run doctor         # checks env + MongoDB connectivity
-npm run atlas:setup    # creates the chunks collection + vector/search indexes
-npm run seed           # embeds + upserts the demo users in seed/ into Atlas
-npm run dev            # http://localhost:3000
+npm run doctor         # env + MongoDB connectivity
+npm run atlas:setup    # chunks collection + vector/search indexes
+npm run seed           # embed + upsert demo users in seed/
+npm run dev
 ```
 
-Query the RAG pipeline directly from the CLI (real retrieval + Claude):
+CLI query (real retrieval + Gemini ask / Claude plan):
 
 ```bash
 npm run query -- ask  "What is Alex's stack?" --owner alex
@@ -165,45 +78,82 @@ npm run query -- ask  "How does she work?"    --owner priya --friend
 npm run query -- plan "A notes-to-website CLI" --owner alex --out brief.md
 ```
 
-### Environment
+Demo seed users live in [`seed/`](./seed) (`alex`, `priya`, `marcus`). Extra fixtures: [`sample-vault/`](./sample-vault).
 
-| Var | Purpose |
-|-----|---------|
-| `USE_MOCK_AI` | `true` (default) runs mocks keyless; `false` = real Atlas/Voyage/Claude |
-| `ANTHROPIC_API_KEY` | Claude — the only synthesis LLM |
-| `CLAUDE_ASK_MODEL` / `CLAUDE_PLAN_MODEL` | small model for `ask` / Opus for `plan` |
-| `MONGODB_URI` / `MONGODB_DB` | Atlas SRV string (Vector Search enabled) / db name |
-| `VOYAGE_API_KEY` / `VOYAGE_MODEL` / `EMBEDDING_DIM` | Voyage embeddings (`voyage-3.5` / `1024`) |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | **Empty ⇒ fake auth** (type a username); set both ⇒ real Clerk |
-| `ALLOW_HTTP_INGEST` | must be `true` for the in-app file upload |
-
-**Security:** never put real secrets in `.env.example`; rotate any key that was ever committed.
+---
 
 ## Auth
 
 Two modes, switched by env — no code changes:
 
-- **Fake auth (default, demo):** leave the Clerk keys empty. Sign in by typing any username;
-  sign out from the user button. The username is the vault `owner` for everything you do.
-- **Real Clerk:** set both Clerk keys. Uses Clerk's dev instance (no custom domain needed).
-  Map Clerk userIds to vault owners with `CLERK_OWNER_MAP=user_xxx:momen,user_yyy:rayan`,
-  and add the deploy URL under Clerk → Allowed origins.
+- **Fake auth (default, demo):** leave both Clerk keys empty. Sign in by typing any username; that name is the vault `owner`.
+- **Real Clerk:** set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`. Map Clerk userIds → vault owners with `CLERK_OWNER_MAP=user_xxx:momen,user_yyy:rayan`, and add the deploy URL under Clerk → Allowed origins.
+
+---
+
+## Environment
+
+| Var | Purpose |
+| --- | --- |
+| `USE_MOCK_AI` | `true` (default) = mocks keyless; `false` = real Atlas / Voyage / Gemini+Claude |
+| `AI_FALLBACK_TO_MOCK` | When real AI fails, fall back to mocks (`true` by default) |
+| `GEMINI_API_KEY` / `GEMINI_ASK_MODEL` | Gemini for `ask` (default `gemini-2.5-flash`) |
+| `ANTHROPIC_API_KEY` | Claude for `plan` only |
+| `CLAUDE_PLAN_MODEL` | Opus model for `plan` (default `claude-opus-4-8`) |
+| `MONGODB_URI` / `MONGODB_DB` | Atlas SRV string (Vector Search enabled) / db name |
+| `VOYAGE_API_KEY` / `VOYAGE_MODEL` / `EMBEDDING_DIM` | Embeddings (`voyage-3.5` / `1024`) |
+| `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` / `ELEVENLABS_MODEL` | Optional TTS; missing key ⇒ `/api/tts` returns 501 |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | Empty ⇒ fake auth; both set ⇒ real Clerk |
+| `CLERK_OWNER_MAP` | `userId:owner` pairs for vault mapping |
+| `ALLOW_HTTP_INGEST` | Must be `true` for in-app upload / HTTP ingest |
+| `LLM_RATE_LIMIT_PER_MINUTE` | Per-user LLM rate limit (`0` disables; default `30`) |
+| `UPLOAD_MAX_CHUNKS_PER_USER` / `UPLOAD_MAX_DOCS_PER_USER` | Upload quotas (defaults `500` / `50`) |
+
+Full template: [`.env.example`](./.env.example). **Never** commit real secrets; rotate any key that was ever committed.
+
+---
+
+## API surface
+
+| Route | Method | Notes |
+| --- | --- | --- |
+| `/api/ask` | POST | SSE tokens + citations |
+| `/api/plan` | POST | Markdown brief + citations |
+| `/api/upload` | POST | Multipart file → chunk + embed + upsert (quota-guarded) |
+| `/api/ingest` | POST | Optional HTTP ingest (`ALLOW_HTTP_INGEST=true`) |
+| `/api/users` | GET | Directory of owners with shared notes + roles |
+| `/api/me` | GET | Upsert/return caller identity (`userId`, `owner`, `role`) |
+| `/api/tts` | POST | ElevenLabs audio/mpeg stream (501 if unconfigured) |
+
+---
 
 ## Deploy (DigitalOcean App Platform)
 
-Deploy from GitHub so App Platform builds and runs this Next.js service on port **3000**
-(spec in [`deploy/app.yaml`](./deploy/app.yaml); Atlas notes in [`deploy/ATLAS.md`](./deploy/ATLAS.md)).
-Set encrypted app-level env vars: `MONGODB_URI`, `VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`,
-`USE_MOCK_AI=false`, `ALLOW_HTTP_INGEST=true`, and (if using real Clerk) the two Clerk keys.
-Build: `npm run build` · Run: `npm start`. A Dockerfile for local smoke tests is in
-[`deploy/Dockerfile`](./deploy/Dockerfile).
+Spec: [`deploy/app.yaml`](./deploy/app.yaml) · Atlas notes: [`deploy/ATLAS.md`](./deploy/ATLAS.md) · local image: [`deploy/Dockerfile`](./deploy/Dockerfile).
 
-## Status
+Set encrypted app-level env vars at minimum: `MONGODB_URI`, `VOYAGE_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `USE_MOCK_AI=false`, `ALLOW_HTTP_INGEST=true`. Optionally ElevenLabs and Clerk keys. Build: `npm run build` · Run: `npm start` · port **3000**.
 
-Core RAG (M0–M7) done and verified via CLI; web app integrated. See
-[`docs/PROJECT.md`](./docs/PROJECT.md) for milestones and the progress log, and
-[`docs/DEMO.md`](./docs/DEMO.md) for the demo script.
->>>>>>> DevBranch
+---
+
+## Repo layout
+
+```
+src/
+  contract/types.ts     # shared schema + IVectorStore / IRetriever / IGenerator
+  ingestion/            # vault → DocumentMeta[] + Chunk[]
+  ai/                   # store · retrieval · generation · mocks · factory
+  app/api/              # ask · plan · upload · ingest · users · me · tts
+  lib/                  # config, auth, roles, identity, owners, schemas, …
+scripts/                # ingest · seed · doctor · atlas:setup · query
+seed/                   # demo personas (alex / priya / marcus)
+sample-vault/           # synthetic fixtures for local ingest demos
+deploy/                 # DO App Platform spec + Dockerfile + Atlas notes
+docs/                   # project tracker, demo script, planning history
+```
+
+Planning / milestones: [`docs/PROJECT.md`](./docs/PROJECT.md) · Demo script: [`docs/DEMO.md`](./docs/DEMO.md).
+
+---
 
 ## License
 

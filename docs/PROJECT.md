@@ -209,6 +209,9 @@ Voice (M11) is the only skippable item.
   `src/lib/db.ts` to clear the global on failure (next request retries) + 10 s serverSelectionTimeout,
   then forced a fresh deploy. **Full prod smoke green:** self ask, friend ask, unknown-user 404,
   upload→embed to Atlas, self plan — all pass at https://voxassist-8oef4.ondigitalocean.app.
+- **2026-07-11 — synthesis split amended:** `ask` moved to **Gemini** (`gemini-2.5-flash` via
+  `@google/genai`, env `GEMINI_API_KEY` / `GEMINI_ASK_MODEL`); `plan` stays **Claude Opus**
+  (`CLAUDE_PLAN_MODEL`). Reverses the earlier all-Claude lock for the light `ask` path only.
 
 ---
 

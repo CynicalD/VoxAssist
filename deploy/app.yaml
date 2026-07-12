@@ -20,7 +20,7 @@ services:
     environment_slug: node-js
     git:
       repo_clone_url: https://github.com/CynicalD/VoxAssist.git
-      branch: DevBranch
+      branch: main
     build_command: npm run build
     run_command: npm start
     http_port: 3000
@@ -43,6 +43,12 @@ services:
       - key: ANTHROPIC_API_KEY
         scope: RUN_TIME
         type: SECRET
+      - key: GEMINI_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: GEMINI_ASK_MODEL
+        scope: RUN_TIME
+        value: "gemini-2.5-flash"
       # Real AI in prod; no silent mock fallback (a hard error beats fake answers).
       - key: USE_MOCK_AI
         scope: RUN_AND_BUILD_TIME
