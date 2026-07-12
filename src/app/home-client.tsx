@@ -2,7 +2,7 @@
 
 import { SignIn, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { AudioLines, Keyboard } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { CompassMark } from "@/components/voxassist/compass-mark";import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AnswerPanel } from "@/components/voxassist/answer-panel";
 import { AskBox, type AskMode } from "@/components/voxassist/ask-box";
@@ -424,10 +424,7 @@ function AppShell() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
-            <AudioLines
-              className="size-5 shrink-0 text-primary"
-              aria-hidden="true"
-            />
+            <CompassMark filled className="size-5 shrink-0 text-primary" />
             <span className="truncate font-semibold tracking-tight">
               VoxAssist
             </span>
