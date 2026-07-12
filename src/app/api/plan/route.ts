@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   const { idea, username } = parsed.data;
-  const scoped = buildScope(authed.userId, username);
+  const scoped = await buildScope(authed.userId, username);
   if (!scoped.ok) {
     return jsonError(scoped.error, 404);
   }

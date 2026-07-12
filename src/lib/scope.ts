@@ -1,8 +1,6 @@
 import type { Scope } from "@/contract/types";
-import {
-  resolveClerkUserIdToOwner,
-  resolveUsernameToOwnerId,
-} from "@/lib/users";
+import { resolveOwner } from "@/lib/identity";
+import { resolveUsernameToOwnerId } from "@/lib/users";
 
 export type BuildScopeResult =
   | { ok: true; scope: Scope }
@@ -16,14 +14,14 @@ export type BuildScopeResult =
  * enforces the shared flag. Resolving a username is a lookup to an owner id,
  * never a permission bypass.
  *
- * Self-scope uses the vault owner mapped from Clerk userId (CLERK_OWNER_MAP),
- * so queries hit notes ingested with `--as momen` / `--as rayan`.
+ * Self-scope uses resolveOwner (stored users doc → CLERK_OWNER_MAP →
+ * Clerk username → raw userId) so queries hit notes ingested with `--as momen`.
  */
-export function buildScope(
+export async function buildScope(
   clerkUserId: string,
   targetUsername?: string | null,
-): BuildScopeResult {
-  const callerOwner = resolveClerkUserIdToOwner(clerkUserId);
+): Promise<BuildScopeResult> {
+  const callerOwner = await resolveOwner(clerkUserId);
   const trimmed = targetUsername?.trim();
   if (!trimmed) {
     return { ok: true, scope: { kind: "self", owner: callerOwner } };

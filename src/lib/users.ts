@@ -16,7 +16,7 @@ const USERNAME_TO_OWNER_ID: Record<string, string> = {
 };
 
 /** Parse CLERK_OWNER_MAP env (userId:owner pairs). */
-function parseClerkOwnerMap(): Record<string, string> {
+export function parseClerkOwnerMap(): Record<string, string> {
   const raw = config.clerkOwnerMap.trim();
   if (!raw) return {};
   const out: Record<string, string> = {};
