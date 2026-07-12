@@ -92,11 +92,7 @@ export const AskBox = forwardRef<HTMLTextAreaElement, AskBoxProps>(
 
     const chips =
       mode === "ask"
-        ? [
-            "What is my stack?",
-            "How do we deploy?",
-            "Summarize auth with Clerk",
-          ]
+        ? []
         : [
             "Ship a RAG demo this weekend",
             "Add friend-scope vault sharing",
@@ -113,6 +109,7 @@ export const AskBox = forwardRef<HTMLTextAreaElement, AskBoxProps>(
           <ModeTab active={mode === "plan"} onClick={() => onModeChange("plan")} icon={Sparkles} label="Plan" />
         </div>
 
+        {chips.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5" aria-label="Example prompts">
           {chips.map((chip) => (
             <button
@@ -126,6 +123,7 @@ export const AskBox = forwardRef<HTMLTextAreaElement, AskBoxProps>(
             </button>
           ))}
         </div>
+        )}
 
         <Label htmlFor="ask-input" className="sr-only">
           {mode === "ask" ? "Your question" : "Your idea"}
@@ -139,7 +137,7 @@ export const AskBox = forwardRef<HTMLTextAreaElement, AskBoxProps>(
           rows={3}
           placeholder={
             mode === "ask"
-              ? "Ask anything about the knowledge base…"
+              ? "ex: What is my stack?"
               : "Describe an idea to draft a grounded plan…"
           }
           className="resize-none border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
