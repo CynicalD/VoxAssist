@@ -78,6 +78,9 @@ services:
       - key: ELEVENLABS_MODEL
         scope: RUN_TIME
         value: "eleven_flash_v2_5"
+      - key: ELEVENLABS_STT_MODEL
+        scope: RUN_TIME
+        value: "scribe_v2"
       # RUN_TIME only: NODE_ENV=production at build time makes the buildpack
       # skip devDependencies, which Next needs (@tailwindcss/postcss, typescript).
       - key: NODE_ENV
