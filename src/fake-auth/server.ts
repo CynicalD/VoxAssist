@@ -16,6 +16,19 @@ export async function auth(): Promise<AuthResult> {
   return { userId: userId || null };
 }
 
+/**
+ * Drop-in for Clerk's currentUser(). Fake session username IS the vault owner id.
+ * Returns null when signed out (matches real Clerk).
+ */
+export async function currentUser(): Promise<{
+  id: string;
+  username: string;
+} | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+  return { id: userId, username: userId };
+}
+
 type MiddlewareHandler = (
   authFn: (() => Promise<AuthResult>) & { protect: () => Promise<AuthResult> },
   req: Request,

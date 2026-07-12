@@ -87,7 +87,16 @@ Demo seed users live in [`seed/`](./seed) (`alex`, `priya`, `marcus`). Extra fix
 Two modes, switched by env — no code changes:
 
 - **Fake auth (default, demo):** leave both Clerk keys empty. Sign in by typing any username; that name is the vault `owner`.
-- **Real Clerk:** set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`. Map Clerk userIds → vault owners with `CLERK_OWNER_MAP=user_xxx:momen,user_yyy:rayan`, and add the deploy URL under Clerk → Allowed origins.
+- **Real Clerk:** set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`. After flipping keys, delete `.next` and restart.
+
+**Vault owner resolution** (self-scope) uses this precedence:
+
+1. Stored `users.owner` (set on first `/api/me` or ask/plan)
+2. `CLERK_OWNER_MAP` override (`user_xxx:momen`)
+3. Clerk **username** (normalized; aliases like `omen-mali` → `momen`)
+4. Raw Clerk `userId` (last resort)
+
+For the demo, set Clerk usernames to `momen` / `rayan` (or seed owners) so notes match without an env map. Add the deploy URL under Clerk → Allowed origins.
 
 ---
 
@@ -104,7 +113,7 @@ Two modes, switched by env — no code changes:
 | `VOYAGE_API_KEY` / `VOYAGE_MODEL` / `EMBEDDING_DIM` | Embeddings (`voyage-3.5` / `1024`) |
 | `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` / `ELEVENLABS_MODEL` | Optional TTS; missing key ⇒ `/api/tts` returns 501 |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | Empty ⇒ fake auth; both set ⇒ real Clerk |
-| `CLERK_OWNER_MAP` | `userId:owner` pairs for vault mapping |
+| `CLERK_OWNER_MAP` | Optional `userId:owner` override when username ≠ vault owner |
 | `ALLOW_HTTP_INGEST` | Must be `true` for in-app upload / HTTP ingest |
 | `LLM_RATE_LIMIT_PER_MINUTE` | Per-user LLM rate limit (`0` disables; default `30`) |
 | `UPLOAD_MAX_CHUNKS_PER_USER` / `UPLOAD_MAX_DOCS_PER_USER` | Upload quotas (defaults `500` / `50`) |
