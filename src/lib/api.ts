@@ -162,8 +162,55 @@ export async function fetchTts(text: string): Promise<Blob> {
     } catch {
       /* ignore */
     }
-    throw new Error(detail);
+    const error = new Error(detail) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
   }
 
   return res.blob();
+}
+
+/**
+ * POST /api/stt — transcribe an audio Blob via ElevenLabs Scribe.
+ * Throws on non-OK (including 501 when STT is not configured).
+ */
+export async function fetchStt(audio: Blob): Promise<string> {
+  const form = new FormData();
+  const type = audio.type || "audio/webm";
+  const ext = type.includes("ogg")
+    ? "ogg"
+    : type.includes("mp4") || type.includes("m4a")
+      ? "m4a"
+      : type.includes("wav")
+        ? "wav"
+        : "webm";
+  form.append("file", audio, `recording.${ext}`);
+
+  const res = await fetch("/api/stt", {
+    method: "POST",
+    body: form,
+  });
+
+  if (res.status === 401) {
+    throw new Error("Unauthorized — sign in to use voice input.");
+  }
+  if (!res.ok) {
+    let detail = `stt failed: ${res.status}`;
+    try {
+      const err = (await res.json()) as { error?: string };
+      if (err.error) detail = err.error;
+    } catch {
+      /* ignore */
+    }
+    const error = new Error(detail) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
+  }
+
+  const data = (await res.json()) as { text?: string };
+  const text = typeof data.text === "string" ? data.text.trim() : "";
+  if (!text) {
+    throw new Error("No speech detected in the audio.");
+  }
+  return text;
 }

@@ -5,6 +5,7 @@ const isProtectedApi = createRouteMatcher([
   "/api/plan(.*)",
   "/api/ingest(.*)",
   "/api/tts(.*)",
+  "/api/stt(.*)",
   "/api/users(.*)",
   "/api/me(.*)",
 ]);
