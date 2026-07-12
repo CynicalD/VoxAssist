@@ -1,7 +1,8 @@
-// Real IGenerator — all-Claude synthesis.
-// `ask`  → small/fast model (config.askModel), grounded answer + citations.
-// `plan` → Opus (config.planModel), personalized project brief.
+// Real IGenerator — split providers.
+// `ask`  → Gemini (config.askModel / gemini-2.5-flash), grounded answer + citations.
+// `plan` → Claude Opus (config.planModel), personalized project brief.
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import type {
   AskResponse,
   IGenerator,
@@ -13,13 +14,20 @@ import { config } from "../lib/config";
 /** Per-chunk char cap when building context (keeps prompts lean). */
 const CHUNK_CHAR_CAP = 1500;
 
-function getClient(): Anthropic {
+function getAnthropicClient(): Anthropic {
   return new Anthropic({
     apiKey: config.anthropicApiKey,
     ...(process.env.ANTHROPIC_BASE_URL
       ? { baseURL: process.env.ANTHROPIC_BASE_URL }
       : {}),
   });
+}
+
+function getGeminiClient(): GoogleGenAI {
+  if (!config.geminiApiKey) {
+    throw new Error("Missing env var GEMINI_API_KEY (see .env.example)");
+  }
+  return new GoogleGenAI({ apiKey: config.geminiApiKey });
 }
 
 /** Format retrieval context as numbered blocks the model can cite as [n]. */
@@ -63,23 +71,20 @@ Ground every stack/style choice in the context where possible, citing [n]. Where
 
 export class Generator implements IGenerator {
   async ask(question: string, context: RetrievalResult): Promise<AskResponse> {
-    const client = getClient();
-    const message = await client.messages.create({
+    const ai = getGeminiClient();
+    const res = await ai.models.generateContent({
       model: config.askModel,
-      max_tokens: 1024,
-      system: ASK_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Context:\n\n${contextBlock(context)}\n\nQuestion: ${question}`,
-        },
-      ],
+      contents: `Context:\n\n${contextBlock(context)}\n\nQuestion: ${question}`,
+      config: {
+        systemInstruction: ASK_SYSTEM,
+        maxOutputTokens: 1024,
+      },
     });
-    return { answer: textOf(message), citations: context.citations };
+    return { answer: res.text ?? "", citations: context.citations };
   }
 
   async plan(idea: string, context: RetrievalResult): Promise<PlanResponse> {
-    const client = getClient();
+    const client = getAnthropicClient();
     const message = await client.messages.create({
       model: config.planModel,
       max_tokens: 4000,

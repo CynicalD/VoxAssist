@@ -34,6 +34,7 @@ export const config = {
   voyageApiKey: env("VOYAGE_API_KEY"),
   anthropicBaseUrl: env("ANTHROPIC_BASE_URL"),
   anthropicApiKey: env("ANTHROPIC_API_KEY"),
+  geminiApiKey: env("GEMINI_API_KEY"),
   clerkPublishableKey: env("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"),
   clerkSecretKey: env("CLERK_SECRET_KEY"),
   /** True when USE_MOCK_AI === "true" (default if unset). */
@@ -68,8 +69,8 @@ export const config = {
   mongoDb: env("MONGODB_DB", "voxassist"),
   voyageModel: env("VOYAGE_MODEL", "voyage-3.5"),
   embeddingDim: Number(env("EMBEDDING_DIM", "1024")),
-  /** All synthesis is Claude: small/fast for `ask`, Opus for `plan`. */
-  askModel: env("CLAUDE_ASK_MODEL", "claude-haiku-4-5-20251001"),
+  /** Gemini for `ask`, Claude Opus for `plan`. */
+  askModel: env("GEMINI_ASK_MODEL", "gemini-2.5-flash"),
   planModel: env("CLAUDE_PLAN_MODEL", "claude-opus-4-8"),
   collections: {
     chunks: "chunks",

@@ -18,6 +18,7 @@ async function main() {
     return ok;
   };
 
+  envSet("GEMINI_API_KEY");
   envSet("ANTHROPIC_API_KEY");
   const hasMongo = envSet("MONGODB_URI");
   envSet("VOYAGE_API_KEY");
